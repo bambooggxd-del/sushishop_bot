@@ -3,6 +3,7 @@ import datetime
 import discord
 from discord.ext import commands
 from discord.ui import View, Button, Modal, TextInput
+import re  # Added for mathematical expression parsing
 
 from server import server_on
 
@@ -91,7 +92,6 @@ async def send_sale_log(embed_data: discord.Embed, interaction: discord.Interact
     except Exception as e:
         print(f"❌ เกิดข้อผิดพลาดในการส่งบันทึกการขาย: {e}")
 
-
 # --------------------------------------------------------------------------------------------------
 # คำสั่งต่างๆ
 @bot.command()
@@ -114,6 +114,17 @@ async def sushi(ctx):
     global shop_open
     shop_open = not shop_open
     status = "✅ ร้านเปิด" if shop_open else "❌ ร้านปิด"
+    
+    # Update channel name based on shop status
+    if ctx.channel.id == GAMEPASS_CHANNEL_ID:
+        new_name = "🟢เกมพาสเรท 7" if shop_open else "🔴เกมพาสเรท 7"
+        try:
+            await ctx.channel.edit(name=new_name)
+        except discord.Forbidden:
+            print("❌ ไม่มีสิทธิ์แก้ไขชื่อช่อง")
+        except discord.HTTPException as e:
+            print(f"❌ เกิดข้อผิดพลาดในการแก้ไขชื่อช่อง: {e}")
+    
     await ctx.send(f"📌 สถานะร้านถูกเปลี่ยนเป็น: **{status}**", delete_after=5)
     if ctx.channel.id == GAMEPASS_CHANNEL_ID:
         await openshop(ctx) 
@@ -228,39 +239,44 @@ class OpenTicketView(View):
             self.add_item(Button(label="❌ ร้านปิดชั่วคราว", style=discord.ButtonStyle.danger, disabled=True))
 
 class TicketInfoModal(Modal, title="📋 แบบฟอร์มสั่งสินค้า"):
-    user_name = TextInput(label="🪪 ชื่อในเกม?", placeholder="Username", required=True)
+    # Removed the user_name field
     map_name = TextInput(label="🗺 ชื่อแมพที่จะกด?", placeholder="พิมพ์ชื่อแมพ เช่น All Star Tower Defense X", required=True)
     gamepass_name = TextInput(label="💸กดเกมพาสอะไร?", placeholder="พิมพ์ชื่อเกมพาส เช่น x3 Speed 3 ชิ้น", required=True)
-    robux_amount = TextInput(label="🎟 รวมทั้งหมดกี่ Robux?", placeholder="พิมพ์จำนวนRobux เช่น 995", required=True)
+    robux_amount = TextInput(
+        label="🎟 รวมทั้งหมดกี่ Robux?", 
+        placeholder="พิมพ์จำนวนRobux เช่น 995 หรือ 500+200 หรือ 70*10", 
+        required=True
+    )
 
     async def on_submit(self, interaction: discord.Interaction):
         try:
-            robux = int(self.robux_amount.value)
+            # Parse mathematical expressions in robux amount
+            robux_str = self.robux_amount.value.replace('x', '*').replace('×', '*')  # Replace x with *
+            robux = eval(robux_str)  # Evaluate the mathematical expression
+            
             rate = 7
             price = robux / rate
             price_str = f"{price:,.0f} บาท"
 
             customer_embed = discord.Embed(title="📨 รายละเอียดการสั่งซื้อ", color=0x00FF99)
-            customer_embed.add_field(name="🪪 ชื่อในเกม", value=self.user_name.value, inline=False)
             customer_embed.add_field(name="🗺️ แมพ", value=self.map_name.value, inline=False)
             customer_embed.add_field(name="🎟 เกมพาส", value=self.gamepass_name.value, inline=False)
-            customer_embed.add_field(name="💸 จำนวน Robux", value=self.robux_amount.value, inline=True)
+            customer_embed.add_field(name="💸 จำนวน Robux", value=f"{robux:,}", inline=True)
             customer_embed.add_field(name="💰 ราคา", value=price_str, inline=True)
             customer_embed.set_footer(text="ทีมงานจะตอบกลับโดยเร็วที่สุดครับ")
 
             confirm_embed = discord.Embed(title="📨 รายละเอียดการสั่งซื้อ", color=0x00FF99)
-            confirm_embed.add_field(name="🪪 ชื่อในเกม", value=self.user_name.value, inline=False)
             confirm_embed.add_field(name="🗺️ แมพ", value=self.map_name.value, inline=False)
             confirm_embed.add_field(name="🎟 เกมพาส", value=self.gamepass_name.value, inline=False)
-            confirm_embed.add_field(name="💸 จำนวน Robux", value=self.robux_amount.value, inline=True)
+            confirm_embed.add_field(name="💸 จำนวน Robux", value=f"{robux:,}", inline=True)
             confirm_embed.add_field(name="💰 ราคาตามเรท", value=price_str, inline=True)
             confirm_embed.set_footer(text=f"🧾 ผู้ใช้: {interaction.user}")
 
             view = ConfirmTicketView(embed_data=confirm_embed)
             await interaction.response.send_message(embed=customer_embed, view=view, ephemeral=False)
 
-        except ValueError:
-            await interaction.response.send_message("❌ กรุณากรอกจำนวน Robux เป็นตัวเลข", ephemeral=True)
+        except Exception as e:
+            await interaction.response.send_message(f"❌ เกิดข้อผิดพลาดในการคำนวณ Robux: {e}", ephemeral=True)
 
 class ConfirmTicketView(discord.ui.View):
     def __init__(self, embed_data: discord.Embed):
@@ -429,6 +445,17 @@ async def rg(ctx):
     global group_open
     group_open = not group_open
     status = "✅ Robux Group เปิด" if group_open else "❌ Robux Group ปิด"
+    
+    # Update channel name based on group status
+    if ctx.channel.id == GROUP_CHANNEL_ID:
+        new_name = "🟢โรกลุ่มเรท 4.5" if group_open else "🔴โรกลุ่มเรท 4.5"
+        try:
+            await ctx.channel.edit(name=new_name)
+        except discord.Forbidden:
+            print("❌ ไม่มีสิทธิ์แก้ไขชื่อช่อง")
+        except discord.HTTPException as e:
+            print(f"❌ เกิดข้อผิดพลาดในการแก้ไขชื่อช่อง: {e}")
+    
     await ctx.send(f"📌 สถานะ Robux Group ถูกเปลี่ยนเป็น: **{status}**", delete_after=5)
     if ctx.channel.id == GROUP_CHANNEL_ID:
         await opengroup(ctx)
@@ -476,12 +503,18 @@ class OpenGroupTicketView(View):
             self.add_item(Button(label="❌ ร้านปิดชั่วคราว", style=discord.ButtonStyle.danger, disabled=True))
 
 class GroupTicketInfoModal(Modal, title="📋 แบบฟอร์ม Robux Group"):
-    user_name = TextInput(label="🪪 ชื่อในเกม", placeholder="Username", required=True)
-    robux_amount = TextInput(label="💸 ต้องการกดทั้งหมดกี่ Robux?", placeholder="กรอกจำนวน Robux ที่ต้องการ", required=True)
+    robux_amount = TextInput(
+        label="💸 ต้องการกดทั้งหมดกี่ Robux?", 
+        placeholder="กรอกจำนวน Robux ที่ต้องการ เช่น 1000 หรือ 500+200+300", 
+        required=True
+    )
 
     async def on_submit(self, interaction: discord.Interaction):
         try:
-            robux = int(self.robux_amount.value)
+            # Parse mathematical expressions in robux amount
+            robux_str = self.robux_amount.value.replace('x', '*').replace('×', '*')  # Replace x with *
+            robux = eval(robux_str)  # Evaluate the mathematical expression
+            
             if robux < 1500:
                 rate = 4.5
             else:
@@ -491,8 +524,7 @@ class GroupTicketInfoModal(Modal, title="📋 แบบฟอร์ม Robux Gro
             price_str = f"{price:,.0f} บาท"
 
             customer_embed = discord.Embed(title="📨 รายละเอียดการสั่งซื้อ Robux Group", color=0x00FF99)
-            customer_embed.add_field(name="🪪 ชื่อในเกม", value=self.user_name.value, inline=False)
-            customer_embed.add_field(name="💸 จำนวน Robux", value=self.robux_amount.value, inline=True)
+            customer_embed.add_field(name="💸 จำนวน Robux", value=f"{robux:,}", inline=True)
             customer_embed.add_field(name="💰 ราคาตามเรท", value=price_str, inline=True)
             customer_embed.set_footer(text="ทีมงานจะตรวจสอบและตอบกลับโดยเร็วที่สุดครับ")
 
@@ -502,8 +534,8 @@ class GroupTicketInfoModal(Modal, title="📋 แบบฟอร์ม Robux Gro
             view = ConfirmTicketView(embed_data=confirm_embed)
             await interaction.response.send_message(embed=customer_embed, view=view, ephemeral=False)
 
-        except ValueError:
-            await interaction.response.send_message("❌ กรุณากรอกจำนวน Robux เป็นตัวเลข", ephemeral=True)
+        except Exception as e:
+            await interaction.response.send_message(f"❌ เกิดข้อผิดพลาดในการคำนวณ Robux: {e}", ephemeral=True)
 
 # --------------------------------------------------------------------------------------------------
 # เพิ่ม Event สำหรับปุ่มเปิดตั๋ว Robux Group
@@ -613,10 +645,25 @@ class GroupTicketFullActionView(View):
 
 # --------------------------------------------------------------------------------------------------
 # คิดเลขเรทของ Gamepass / Group
-@bot.command()
-async def gp(ctx, robux: int):
-    """คำนวณราคาจากจำนวน Robux (Gamepass)"""
+def calculate_robux(expression):
+    """คำนวณนิพจน์ทางคณิตศาสตร์และส่งกลับค่าผลลัพธ์"""
+    # แทนที่ x และ × ด้วย * สำหรับการคูณ
+    expression = expression.replace('x', '*').replace('×', '*')
+    
+    # ใช้ eval เพื่อคำนวณนิพจน์ (ควรใช้ในสภาพแวดล้อมที่ปลอดภัย)
     try:
+        result = eval(expression)
+        return int(result)
+    except:
+        raise ValueError("ไม่สามารถคำนวณนิพจน์ได้")
+
+@bot.command()
+async def gp(ctx, *, expression: str):
+    """คำนวณราคาจากจำนวน Robux (Gamepass) โดยรองรับนิพจน์ทางคณิตศาสตร์"""
+    try:
+        # คำนวณจำนวน Robux จากนิพจน์
+        robux = calculate_robux(expression)
+        
         rate = 7
         price = robux / rate
         price_str = f"{price:,.0f} บาท"
@@ -626,9 +673,12 @@ async def gp(ctx, robux: int):
 
 
 @bot.command()
-async def g(ctx, robux: int):
-    """คำนวณราคาจากจำนวน Robux (Group)"""
+async def g(ctx, *, expression: str):
+    """คำนวณราคาจากจำนวน Robux (Group) โดยรองรับนิพจน์ทางคณิตศาสตร์"""
     try:
+        # คำนวณจำนวน Robux จากนิพจน์
+        robux = calculate_robux(expression)
+        
         if robux < 1500:
             rate = 4.5
         else:
@@ -644,13 +694,6 @@ server_on()
 # เริ่มการทำงานบอท
 
 bot.run(os.getenv("TOKEN"))
-
-
-
-
-
-
-
 
 
 
