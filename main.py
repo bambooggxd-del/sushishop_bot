@@ -97,7 +97,7 @@ class RateLimiter:
 # ==================== BOT CLASS ====================
 class MyBot(commands.Bot):
     def __init__(self):
-        super().__init__(command_prefix=".", intents=intents, help_command=None)
+        super().__init__(command_prefix="!", intents=intents, help_command=None)
         self.last_update_time = 0
         self.is_reacting_to_credit_channel = False
         self.commands_synced = False
@@ -160,110 +160,116 @@ async def help_command(ctx, command_name: str = None):
         )
         
         general_commands = (
-            "`.help` - แสดงเมนูช่วยเหลือนี้\n"
-            "`.help [คำสั่ง]` - แสดงรายละเอียดคำสั่งเฉพาะ\n"
-            "`.shop` - ส่ง embed ร้านค้าหลัก\n"
-            "`.link` - แสดงลิงก์กลุ่ม Roblox\n"
-            "`.qr` - แสดง QR code สำหรับโอนเงิน\n"
-            "`.love` - ส่งความรักให้บอท 💕\n"
-            "`.say <ข้อความ>` - ให้บอทพูดตาม"
+            "`!help` - แสดงเมนูช่วยเหลือนี้\n"
+            "`!help [คำสั่ง]` - แสดงรายละเอียดคำสั่งเฉพาะ\n"
+            "`!shop` - ส่ง embed ร้านค้าหลัก\n"
+            "`!link` - แสดงลิงก์กลุ่ม Roblox\n"
+            "`!qr` - แสดง QR code สำหรับโอนเงิน\n"
+            "`!love` - ส่งความรักให้บอท 💕\n"
+            "`!say <ข้อความ>` - ให้บอทพูดตาม"
         )
         embed.add_field(name="📌 คำสั่งทั่วไป", value=general_commands, inline=False)
         
         calc_commands = (
-            "`.gp <จำนวน>` - คำนวณราคา Gamepass (บาท)\n"
-            "`.g <จำนวน>` - คำนวณราคา Group (บาท)\n"
-            "`.gpb <จำนวน>` - คำนวณ Gamepass จากบาท\n"
-            "`.gb <จำนวน>` - คำนวณ Group จากบาท\n"
-            "`.tax <จำนวน>` - คำนวณภาษี 30%"
+            "`!gp <จำนวน>` - คำนวณราคา Gamepass (บาท)\n"
+            "`!g <จำนวน>` - คำนวณราคา Group (บาท)\n"
+            "`!gpb <จำนวน>` - คำนวณ Gamepass จากบาท\n"
+            "`!gb <จำนวน>` - คำนวณ Group จากบาท\n"
+            "`!tax <จำนวน>` - คำนวณภาษี 30%"
         )
         embed.add_field(name="🧮 คำสั่งคำนวณ", value=calc_commands, inline=False)
         
         if ctx.author.guild_permissions.administrator:
             admin_commands = (
-                "`.open` / `.close` - เปิด/ปิดร้าน\n"
-                "`.shop_open` / `.shop_close` - เปิด/ปิดร้าน\n"
-                "`.stock [gp/group] [จำนวน]` - ดู/ตั้งค่า stock\n"
-                "`.group [on/off]` - เปิด/ปิด Group ticket\n"
-                "`.rate [group/low/high]` - ดู/ตั้งค่าเรท\n"
-                "`.annoymous` / `.annoymous_off` - เปิด/ปิดโหมดไม่ระบุตัวตน\n"
-                "`.tkd` - ลบตั๋ว (ใช้ในห้องตั๋ว)\n"
-                "`.ty` / `.vouch` - ปิดตั๋วและส่งของ\n"
-                "`.od` / `.odg` - รับออร์เดอร์ Gamepass/Group\n"
-                "`.setup` - ตั้งค่าระบบ\n"
-                "`.restart` - รีสตาร์ทปุ่ม\n"
-                "`.sync` - Sync Slash Commands"
+                "`!open` / `!close` - เปิด/ปิดร้าน\n"
+                "`!shop_open` / `!shop_close` - เปิด/ปิดร้าน\n"
+                "`!stock [gp/group] [จำนวน]` - ดู/ตั้งค่า stock\n"
+                "`!group [on/off]` - เปิด/ปิด Group ticket\n"
+                "`!rate [group/low/high]` - ดู/ตั้งค่าเรท\n"
+                "`!annoymous` / `!annoymous_off` - เปิด/ปิดโหมดไม่ระบุตัวตน\n"
+                "`!tkd` - ลบตั๋ว (ใช้ในห้องตั๋ว)\n"
+                "`!ty` / `!vouch` - ปิดตั๋วและส่งของ\n"
+                "`!od` / `!odg` - รับออร์เดอร์ Gamepass/Group\n"
+                "`!setup` - ตั้งค่าระบบ\n"
+                "`!restart` - รีสตาร์ทปุ่ม\n"
+                "`!sync` - Sync Slash Commands"
             )
             embed.add_field(name="👑 คำสั่งแอดมิน", value=admin_commands, inline=False)
         
-        embed.set_footer(text="พิมพ์ .help <คำสั่ง> เพื่อดูรายละเอียดเพิ่มเติม")
+        embed.set_footer(text="พิมพ์ !help <คำสั่ง> เพื่อดูรายละเอียดเพิ่มเติม")
         await ctx.send(embed=embed)
 
 async def show_command_help(ctx, command_name: str):
     commands_info = {
+        "shop": {
+            "description": "ส่ง embed ร้านค้าหลักไปยังช่องหลัก",
+            "usage": "!shop",
+            "example": "!shop",
+            "note": "ใช้ส่งหรืออัพเดท embed ร้านค้าที่มีปุ่มเปิดตั๋ว"
+        },
         "gp": {
             "description": "คำนวณราคา Gamepass จากจำนวน Robux",
-            "usage": ".gp <จำนวน>",
-            "example": ".gp 1000",
+            "usage": "!gp <จำนวน>",
+            "example": "!gp 1000",
             "note": "แสดงราคาเป็นบาทตามเรทปัจจุบัน"
         },
         "g": {
             "description": "คำนวณราคา Group จากจำนวน Robux",
-            "usage": ".g <จำนวน>",
-            "example": ".g 1000",
+            "usage": "!g <จำนวน>",
+            "example": "!g 1000",
             "note": "แสดงราคาเป็นบาทตามเรทปัจจุบัน (500 บาทขึ้นไปได้เรทพิเศษ)"
         },
         "gpb": {
             "description": "คำนวณจำนวน Robux Gamepass จากจำนวนบาท",
-            "usage": ".gpb <จำนวน>",
-            "example": ".gpb 500",
+            "usage": "!gpb <จำนวน>",
+            "example": "!gpb 500",
             "note": "แสดงจำนวน Robux ที่จะได้รับตามเรทปัจจุบัน"
         },
         "gb": {
             "description": "คำนวณจำนวน Robux Group จากจำนวนบาท",
-            "usage": ".gb <จำนวน>",
-            "example": ".gb 500",
+            "usage": "!gb <จำนวน>",
+            "example": "!gb 500",
             "note": "แสดงจำนวน Robux ที่จะได้รับตามเรทปัจจุบัน"
         },
         "tax": {
             "description": "คำนวณจำนวน Robux หลังจากหักภาษี",
-            "usage": ".tax <จำนวน> หรือ .tax <จำนวน>-<เปอร์เซ็น>%",
-            "example": ".tax 1000 หรือ .tax 1000-30%",
+            "usage": "!tax <จำนวน> หรือ !tax <จำนวน>-<เปอร์เซ็น>%",
+            "example": "!tax 1000 หรือ !tax 1000-30%",
             "note": "ถ้าไม่ระบุเปอร์เซ็น จะหัก 30% อัตโนมัติ"
         },
         "annoymous": {
             "description": "เปิดโหมดไม่ระบุตัวตนในตั๋ว",
-            "usage": ".annoymous",
+            "usage": "!annoymous",
             "note": "ใช้ในห้องตั๋วเท่านั้น จะซ่อนชื่อผู้ซื้อในใบเสร็จ"
         },
         "annoymous_off": {
             "description": "ปิดโหมดไม่ระบุตัวตนในตั๋ว",
-            "usage": ".annoymous_off",
+            "usage": "!annoymous_off",
             "note": "ใช้ในห้องตั๋วเท่านั้น จะแสดงชื่อผู้ซื้อในใบเสร็จ"
         },
         "tkd": {
             "description": "ลบห้องตั๋ว",
-            "usage": ".tkd",
+            "usage": "!tkd",
             "note": "ใช้ในห้องตั๋วเท่านั้น รูปแบบห้อง: ticket-... หรือ [ddmmyytime-amount-user]"
         },
         "stock": {
             "description": "ดูหรือตั้งค่า stock สินค้า (เฉพาะแอดมิน)",
-            "usage": ".stock หรือ .stock gp <จำนวน> หรือ .stock group <จำนวน>",
-            "example": ".stock gp 1000",
+            "usage": "!stock หรือ !stock gp <จำนวน> หรือ !stock group <จำนวน>",
+            "example": "!stock gp 1000",
             "note": "ถ้าไม่ระบุจำนวนจะแสดง stock ปัจจุบัน"
         },
         "rate": {
             "description": "ดูหรือตั้งค่าเรท (เฉพาะแอดมิน)",
-            "usage": ".rate หรือ .rate group <low> <high> หรือ .rate <ค่า>",
-            "example": ".rate group 4 4.5 หรือ .rate 6",
-            "note": ".rate เฉยๆ แสดงเรทปัจจุบัน"
+            "usage": "!rate หรือ !rate group <low> <high> หรือ !rate <ค่า>",
+            "example": "!rate group 4 4.5 หรือ !rate 6",
+            "note": "!rate เฉยๆ แสดงเรทปัจจุบัน"
         }
     }
     
     if command_name in commands_info:
         info = commands_info[command_name]
         embed = discord.Embed(
-            title=f"📖 วิธีใช้คำสั่ง .{command_name}",
+            title=f"📖 วิธีใช้คำสั่ง !{command_name}",
             description=info["description"],
             color=0xFFFFFF
         )
@@ -302,7 +308,7 @@ async def shop_cmd(ctx):
         print(f"✅ ส่ง main shop embed ไปยังช่อง {target_channel.name} (ID: {target_channel.id})")
         
     except Exception as e:
-        print(f"❌ Error in .shop command: {e}")
+        print(f"❌ Error in !shop command: {e}")
         await ctx.send(f"❌ เกิดข้อผิดพลาด: {e}", delete_after=5)
 
 async def send_shop_embed(channel):
@@ -310,7 +316,7 @@ async def send_shop_embed(channel):
     embed = discord.Embed(title="🍣 wforr 🍣 เปิดให้บริการ", color=0xFFFFFF)
     embed.add_field(
         name=f"🎮 กดเกมพาส | 📊 Stock: {format_number(gamepass_stock)} {'🟢' if gamepass_stock > 0 else '🔴'}", 
-        value=f"```\nเรท: {gamepass_rate} | โรแท้\nเช็คราคาพิมพ์: .gp <จำนวน>\n```", 
+        value=f"```\nเรท: {gamepass_rate} | โรแท้\nเช็คราคาพิมพ์: !gp <จำนวน>\n```", 
         inline=False
     )
     embed.add_field(
@@ -1358,7 +1364,7 @@ async def stock(ctx, stock_type=None, amount=None):
     else:
         embed = discord.Embed(
             title="❌ การใช้งานไม่ถูกต้อง", 
-            description="**การใช้งาน:**\n`.stock` - เช็ค stock ทั้งหมด\n`.stock gp <จำนวน>` - ตั้งค่า Gamepass stock\n`.stock group <จำนวน>` - ตั้งค่า Group stock", 
+            description="**การใช้งาน:**\n`!stock` - เช็ค stock ทั้งหมด\n`!stock gp <จำนวน>` - ตั้งค่า Gamepass stock\n`!stock group <จำนวน>` - ตั้งค่า Group stock", 
             color=0xFF0000
         )
         await ctx.send(embed=embed)
@@ -1404,7 +1410,7 @@ async def group(ctx, status=None):
     else:
         embed = discord.Embed(
             title="❌ การใช้งานไม่ถูกต้อง", 
-            description="**การใช้งาน:**\n`.group` - เช็คสถานะ\n`.group on` - เปิด Group ticket\n`.group off` - ปิด Group ticket", 
+            description="**การใช้งาน:**\n`!group` - เช็คสถานะ\n`!group on` - เปิด Group ticket\n`!group off` - ปิด Group ticket", 
             color=0xFF0000
         )
         await ctx.send(embed=embed)
@@ -1429,7 +1435,7 @@ async def rate(ctx, rate_type=None, low_rate=None, high_rate=None):
         if low_rate is None or high_rate is None:
             embed = discord.Embed(
                 title="❌ การใช้งานไม่ถูกต้อง", 
-                description="**การใช้งาน:** `.rate group <low_rate> <high_rate>`", 
+                description="**การใช้งาน:** `!rate group <low_rate> <high_rate>`", 
                 color=0xFF0000
             )
             await ctx.send(embed=embed)
@@ -1680,10 +1686,10 @@ async def ty(ctx):
         
         await update_main_channel()
         
-        print(f"✅ คำสั่ง .ty ดำเนินการสำเร็จสำหรับห้อง {ctx.channel.name}")
+        print(f"✅ คำสั่ง !ty ดำเนินการสำเร็จสำหรับห้อง {ctx.channel.name}")
         
     except Exception as e:
-        print(f"❌ เกิดข้อผิดพลาดใน .ty: {e}")
+        print(f"❌ เกิดข้อผิดพลาดใน !ty: {e}")
         traceback.print_exc()
 
 @bot.command()
@@ -1848,10 +1854,10 @@ async def vouch(ctx):
         
         await update_main_channel()
         
-        print(f"✅ คำสั่ง .vouch ดำเนินการสำเร็จสำหรับห้อง {ctx.channel.name}")
+        print(f"✅ คำสั่ง !vouch ดำเนินการสำเร็จสำหรับห้อง {ctx.channel.name}")
         
     except Exception as e:
-        print(f"❌ เกิดข้อผิดพลาดใน .vouch: {e}")
+        print(f"❌ เกิดข้อผิดพลาดใน !vouch: {e}")
         traceback.print_exc()
 
 @bot.command()
@@ -1898,7 +1904,7 @@ async def od(ctx, *, expr):
         await update_main_channel()
         
     except Exception as e:
-        print(f"❌ Error in .od: {e}")
+        print(f"❌ Error in !od: {e}")
 
 @bot.command()
 @admin_only()
@@ -1946,7 +1952,7 @@ async def odg(ctx, *, expr):
         await update_main_channel()
         
     except Exception as e:
-        print(f"❌ Error in .odg: {e}")
+        print(f"❌ Error in !odg: {e}")
 
 @bot.command()
 async def qr(ctx):
@@ -2015,7 +2021,7 @@ async def g(ctx, *, expr):
         
         await ctx.send(f"👥 Group {format_number(robux)} Robux = **{format_number(int(price))} บาท** ({rate_text})")
     except Exception as e:
-        print(f"Error in .g: {e}")
+        print(f"Error in !g: {e}")
         await ctx.send("❌ กรุณากรอกตัวเลขให้ถูกต้อง", delete_after=5)
 
 @bot.command()
@@ -2045,7 +2051,7 @@ async def gb(ctx, *, expr):
         robux = int(baht * rate)
         await ctx.send(f"👥 {format_number(int(baht))} บาท = **{format_number(robux)} Robux** ({rate_text})")
     except Exception as e:
-        print(f"Error in .gb: {e}")
+        print(f"Error in !gb: {e}")
         await ctx.send("❌ กรุณากรอกตัวเลขให้ถูกต้อง", delete_after=5)
 
 @bot.command()
@@ -2061,7 +2067,7 @@ async def tax(ctx, *, expr):
             await ctx.send(f"💰 {format_number(number)} โรบัคที่ได้หลังหัก {percent}% = **{format_number(int(number * (1 - percent/100)))} Robux**")
         else:
             await ctx.send(
-                "❌ รูปแบบไม่ถูกต้อง\n\n**การใช้งาน:**\n`.tax 100` - หัก 30% อัตโนมัติ\n`.tax 100-30%` - หัก 30%\n`.tax 100-50%` - หัก 50%", 
+                "❌ รูปแบบไม่ถูกต้อง\n\n**การใช้งาน:**\n`!tax 100` - หัก 30% อัตโนมัติ\n`!tax 100-30%` - หัก 30%\n`!tax 100-50%` - หัก 50%", 
                 delete_after=15
             )
     except:
@@ -2117,7 +2123,7 @@ async def sync(ctx):
 @tasks.loop(minutes=1)
 async def update_presence():
     await bot.change_presence(
-        activity=discord.Game(name="บอทเครื่องคิดเลขของ wforr | .help")
+        activity=discord.Game(name="บอทเครื่องคิดเลขของ wforr | !help")
     )
 
 @tasks.loop(minutes=10)
@@ -2130,7 +2136,7 @@ async def on_ready():
     print(f"✅ บอทออนไลน์แล้ว: {bot.user} (ID: {bot.user.id})")
     
     await bot.change_presence(
-        activity=discord.Game(name="บอทเครื่องคิดเลขของ wforr | .help")
+        activity=discord.Game(name="บอทเครื่องคิดเลขของ wforr | !help")
     )
     
     try:
@@ -2144,7 +2150,7 @@ async def on_ready():
             
     except Exception as e:
         print(f"❌ Error syncing commands: {e}")
-        print("⚠️ กรุณาใช้คำสั่ง .sync เพื่อลอง sync อีกครั้ง")
+        print("⚠️ กรุณาใช้คำสั่ง !sync เพื่อลอง sync อีกครั้ง")
     
     update_presence.start()
     update_credit_channel_task.start()
