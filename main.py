@@ -53,7 +53,7 @@ SALES_LOG_CHANNEL_ID = 1402993077643120720
 CREDIT_CHANNEL_ID = 1475343873684406353
 TRANSCRIPT_CHANNEL_ID = 1475344141419417612
 DELIVERED_CATEGORY_ID = 1475345768037482662
-ARCHIVED_CATEGORY_ID = 1485235427500753059
+ARCHIVED_CATEGORY_ID = 1445086228113264650
 BUYER_ROLE_ID = 1361555369825927249
 
 # Ticket category IDs
@@ -298,8 +298,8 @@ async def shop_cmd(ctx):
         
         print(f"✅ Found channel: {target_channel.name} (ID: {target_channel.id})")
         
-        # Create embed with correct title
-        embed = discord.Embed(title="🍣 wforr stock 🍣 เปิดให้บริการ", color=0xFFFFFF)
+        # Create embed with correct title - changed 🍣 to 🤍
+        embed = discord.Embed(title="🤍 wforr stock 🤍 เปิดให้บริการ", color=0xFFFFFF)
         embed.add_field(
             name=f"🎮 กดเกมพาส | 📊 Stock: {format_number(gamepass_stock)} {'🟢' if gamepass_stock > 0 else '🔴'}", 
             value=f"```\nเรท: {gamepass_rate} | โรแท้\nเช็คราคาพิมพ์: !gp <จำนวน>\n```", 
@@ -343,10 +343,10 @@ async def shop_cmd(ctx):
         notes_btn = Button(label="จดวันที่เข้ากลุ่ม", style=discord.ButtonStyle.secondary, emoji="📝")
         
         async def gamepass_cb(i):
-            await handle_open_ticket(i, "🍣Sushi Gamepass 🍣", "gamepass")
+            await handle_open_ticket(i, "🤍 Sushi Gamepass 🤍", "gamepass")
         
         async def group_cb(i):
-            await handle_open_ticket(i, "💰Robux Group💰", "group")
+            await handle_open_ticket(i, "💰 Robux Group 💰", "group")
         
         async def notes_cb(i):
             await i.response.send_modal(PersonalNoteModal())
@@ -359,16 +359,16 @@ async def shop_cmd(ctx):
         view.add_item(group_btn)
         view.add_item(notes_btn)
         
-        # Send the message (always send new, don't try to edit)
+        # Send the message
         sent_message = await target_channel.send(embed=embed, view=view)
         
-        # Save the message reference if needed
+        # Save the message reference
         bot.main_channel_message = sent_message
         
         # Send confirmation
         confirm_embed = discord.Embed(
             title=f"✅ ส่ง embed ร้านค้าเรียบร้อยแล้ว",
-            description=f"**ช่อง:** {target_channel.mention}\n**ชื่อร้าน:** wforr stock 🍣\n**สถานะ:** {'🟢 เปิด' if shop_open else '🔴 ปิด'}",
+            description=f"**ช่อง:** {target_channel.mention}\n**ชื่อร้าน:** wforr stock 🤍\n**สถานะ:** {'🟢 เปิด' if shop_open else '🔴 ปิด'}",
             color=0x00FF00
         )
         await ctx.send(embed=confirm_embed, delete_after=5)
@@ -414,8 +414,8 @@ async def update_main_channel():
             print(f"❌ ไม่พบช่องหลัก ID: {MAIN_CHANNEL_ID}")
             return
         
-        # Create embed
-        embed = discord.Embed(title="🍣 wforr stock 🍣 เปิดให้บริการ", color=0xFFFFFF)
+        # Create embed - changed 🍣 to 🤍
+        embed = discord.Embed(title="🤍 wforr stock 🤍 เปิดให้บริการ", color=0xFFFFFF)
         embed.add_field(
             name=f"🎮 กดเกมพาส | 📊 Stock: {format_number(gamepass_stock)} {'🟢' if gamepass_stock > 0 else '🔴'}", 
             value=f"```\nเรท: {gamepass_rate} | โรแท้\nเช็คราคาพิมพ์: !gp <จำนวน>\n```", 
@@ -459,10 +459,10 @@ async def update_main_channel():
         notes_btn = Button(label="จดวันที่เข้ากลุ่ม", style=discord.ButtonStyle.secondary, emoji="📝")
         
         async def gamepass_cb(i):
-            await handle_open_ticket(i, "🍣Sushi Gamepass 🍣", "gamepass")
+            await handle_open_ticket(i, "🤍 Sushi Gamepass 🤍", "gamepass")
         
         async def group_cb(i):
-            await handle_open_ticket(i, "💰Robux Group💰", "group")
+            await handle_open_ticket(i, "💰 Robux Group 💰", "group")
         
         async def notes_cb(i):
             await i.response.send_modal(PersonalNoteModal())
@@ -598,8 +598,9 @@ async def handle_open_ticket(interaction, category_name, stock_type):
         if admin_role:
             await channel.send(content=f"{admin_role.mention} มีตั๋วใหม่!")
         
+        # Changed 🍣 to 🤍 in welcome embed
         embed = discord.Embed(
-            title="🍣 wforr 🍣", 
+            title="🤍 wforr 🤍", 
             description="แจ้งแอดมินขอไม่ระบุตัวตนชื่อลูกค้าได้\n\nกรอกแบบฟอร์มเพื่อสั่งสินค้า", 
             color=0xFFFFFF
         )
@@ -1194,8 +1195,9 @@ class DeliveryView(View):
                     anonymous_mode = ticket_anonymous_mode.get(str(self.channel.id), False)
                     buyer_display = "ไม่ระบุตัวตน" if anonymous_mode else (self.buyer.mention if self.buyer else "ไม่ทราบ")
                     
+                    # Changed 🍣 to 🤍 in receipt
                     receipt_embed = discord.Embed(
-                        title=f"🍣 ใบเสร็จการสั่งซื้อ ({self.product_type}) 🍣", 
+                        title=f"🤍 ใบเสร็จการสั่งซื้อ ({self.product_type}) 🤍", 
                         color=receipt_color
                     )
                     receipt_embed.add_field(
@@ -1227,7 +1229,7 @@ class DeliveryView(View):
                         try:
                             dm_embed = discord.Embed(
                                 title=f"🧾 ใบเสร็จการซื้อสินค้า ({self.product_type})",
-                                description="ขอบคุณที่ใช้บริการ wforr นะคะ 🍣",
+                                description="ขอบคุณที่ใช้บริการ wforr นะคะ 🤍",
                                 color=receipt_color
                             )
                             dm_embed.add_field(name="📦 สินค้า", value=self.product_type, inline=True)
@@ -1402,7 +1404,7 @@ async def link(ctx):
         description="เข้ากลุ่มนี้ 15 วันก่อนซื้อโรกลุ่ม: https://www.roblox.com/communities/34713179/VALKYs",
         color=0x00FF00
     )
-    embed.set_footer(text="wforr 🍣")
+    embed.set_footer(text="wforr 🤍")
     await ctx.send(embed=embed)
 
 @bot.command()
@@ -1747,13 +1749,13 @@ async def ty(ctx):
         embed = discord.Embed(
             title="🤍 ส่งของเรียบร้อยแล้ว",
             description=(
-                "**ขอบคุณที่ใช้บริการ wforr** 🍣\n"
+                "**ขอบคุณที่ใช้บริการ wforr** 🤍\n"
                 "ฝากให้เครดิต +1 ให้ด้วยนะคะ 🤍\n\n"
                 "⚠️ **หมายเหตุ:** ตั๋วนี้จะถูกลบใน 10 นาที"
             ),
             color=0x00FF00
         )
-        embed.set_footer(text="wforr 🍣🤍")
+        embed.set_footer(text="wforr 🤍")
         embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/717757556889747657/1403684950770847754/noFilter.png")
         
         view = View(timeout=None)
@@ -1862,7 +1864,7 @@ async def vouch(ctx):
         buyer_display = "ไม่ระบุตัวตน" if anonymous_mode else (buyer.mention if buyer else "ไม่ทราบ")
         
         receipt_embed = discord.Embed(
-            title=f"🍣 ใบเสร็จการสั่งซื้อ ({product_type}) 🍣", 
+            title=f"🤍 ใบเสร็จการสั่งซื้อ ({product_type}) 🤍", 
             color=receipt_color
         )
         receipt_embed.add_field(
@@ -1915,13 +1917,13 @@ async def vouch(ctx):
         embed = discord.Embed(
             title="🤍 ส่งของเรียบร้อยแล้ว",
             description=(
-                "**ขอบคุณที่ใช้บริการ wforr** 🍣\n"
+                "**ขอบคุณที่ใช้บริการ wforr** 🤍\n"
                 "ฝากให้เครดิต +1 ให้ด้วยนะคะ 🤍\n\n"
                 "⚠️ **หมายเหตุ:** ตั๋วนี้จะถูกลบใน 10 นาที"
             ),
             color=0x00FF00
         )
-        embed.set_footer(text="wforr 🍣🤍")
+        embed.set_footer(text="wforr 🤍")
         embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/717757556889747657/1403684950770847754/noFilter.png")
         
         view = View(timeout=None)
@@ -1986,7 +1988,7 @@ async def od(ctx, *, expr):
         
         ticket_robux_data[str(ctx.channel.id)] = str(robux)
         
-        embed = discord.Embed(title="🍣คำสั่งซื้อสินค้า🍣", color=0xFFA500)
+        embed = discord.Embed(title="🤍 คำสั่งซื้อสินค้า 🤍", color=0xFFA500)
         embed.add_field(name="📦 ประเภทสินค้า", value="Gamepass", inline=False)
         embed.add_field(name="💸 จำนวนโรบัค", value=f"{format_number(robux)}", inline=True)
         embed.add_field(name="💰 ราคาตามเรท", value=f"{format_number(int(price))} บาท", inline=True)
@@ -2034,7 +2036,7 @@ async def odg(ctx, *, expr):
         
         ticket_robux_data[str(ctx.channel.id)] = str(robux)
         
-        embed = discord.Embed(title="🍣คำสั่งซื้อสินค้า🍣", color=0x00FFFF)
+        embed = discord.Embed(title="🤍 คำสั่งซื้อสินค้า 🤍", color=0x00FFFF)
         embed.add_field(name="📦 ประเภทสินค้า", value="Group", inline=False)
         embed.add_field(name="💸 จำนวนโรบัค", value=f"{format_number(robux)}", inline=True)
         embed.add_field(name="💰 ราคาตามเรท", value=f"{format_number(int(price))} บาท", inline=True)
@@ -2263,7 +2265,7 @@ async def on_message(message):
     if message.channel.id == CREDIT_CHANNEL_ID:
         if message.author != bot.user:
             await asyncio.sleep(2)
-            for emoji in ["🤍", "🍣"]:
+            for emoji in ["🤍", "🤍"]:
                 try:
                     await message.add_reaction(emoji)
                     await asyncio.sleep(1)
