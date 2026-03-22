@@ -191,7 +191,8 @@ async def help_command(ctx, command_name: str = None):
                 "`!od` / `!odg` - รับออร์เดอร์ Gamepass/Group\n"
                 "`!setup` - ตั้งค่าระบบ\n"
                 "`!restart` - รีสตาร์ทปุ่ม\n"
-                "`!sync` - Sync Slash Commands"
+                "`!sync` - Sync Slash Commands\n"
+                "`!checkchannel` - ตรวจสอบช่องหลัก"
             )
             embed.add_field(name="👑 คำสั่งแอดมิน", value=admin_commands, inline=False)
         
@@ -282,73 +283,6 @@ async def show_command_help(ctx, command_name: str):
     else:
         await ctx.send(f"❌ ไม่พบคำสั่ง `{command_name}`")
 
-# ==================== SHOP EMBED CREATION ====================
-def create_shop_embed():
-    """Create the shop embed with current stock and status"""
-    embed = discord.Embed(title="🍣 wforr stock 🍣 เปิดให้บริการ", color=0xFFFFFF)
-    embed.add_field(
-        name=f"🎮 กดเกมพาส | 📊 Stock: {format_number(gamepass_stock)} {'🟢' if gamepass_stock > 0 else '🔴'}", 
-        value=f"```\nเรท: {gamepass_rate} | โรแท้\nเช็คราคาพิมพ์: !gp <จำนวน>\n```", 
-        inline=False
-    )
-    embed.add_field(
-        name=f"👥 โรบัคกลุ่ม | 📊 Stock: {format_number(group_stock)} {'🟢' if group_stock > 0 else '🔴'}", 
-        value=f"```\nเรท: {group_rate_low} | 500 บาท+ เรท {group_rate_high}\n⚠️เข้ากลุ่ม 15 วันก่อนซื้อ⚠️\n```", 
-        inline=False
-    )
-    embed.add_field(
-        name="🏪 สถานะร้าน", 
-        value=f"```\n{'🟢 เปิด' if shop_open else '🔴 ปิดชั่วคราว'}\n```", 
-        inline=False
-    )
-    embed.set_footer(
-        text=f"wforr • รับกดเกมพาสและอื่น ๆ | อัปเดตล่าสุด: {get_thailand_time().strftime('%d/%m/%y %H:%M')}", 
-        icon_url="https://media.discordapp.net/attachments/717757556889747657/1403684950770847754/noFilter.png"
-    )
-    embed.set_thumbnail(url="https://media.discordapp.net/attachments/717757556889747657/1403684950770847754/noFilter.png")
-    return embed
-
-def create_shop_view():
-    """Create the view with buttons for the shop"""
-    view = View(timeout=None)
-    
-    if not shop_open:
-        gamepass_btn = Button(label="ปิดชั่วคราว", style=discord.ButtonStyle.danger, emoji="🎮", disabled=True)
-    elif gamepass_stock <= 0:
-        gamepass_btn = Button(label="สินค้าหมด", style=discord.ButtonStyle.danger, emoji="🎮", disabled=True)
-    else:
-        gamepass_btn = Button(label="กดเกมพาส", style=discord.ButtonStyle.success, emoji="🎮")
-    
-    if not shop_open:
-        group_btn = Button(label="ปิดชั่วคราว", style=discord.ButtonStyle.danger, emoji="👥", disabled=True)
-    elif not group_ticket_enabled:
-        group_btn = Button(label="ปิดชั่วคราว", style=discord.ButtonStyle.danger, emoji="👥", disabled=True)
-    elif group_stock <= 0:
-        group_btn = Button(label="สินค้าหมด", style=discord.ButtonStyle.danger, emoji="👥", disabled=True)
-    else:
-        group_btn = Button(label="เติมโรกลุ่ม", style=discord.ButtonStyle.success, emoji="👥")
-    
-    notes_btn = Button(label="จดวันที่เข้ากลุ่ม", style=discord.ButtonStyle.secondary, emoji="📝")
-    
-    async def gamepass_cb(i):
-        await handle_open_ticket(i, "🍣Sushi Gamepass 🍣", "gamepass")
-    
-    async def group_cb(i):
-        await handle_open_ticket(i, "💰Robux Group💰", "group")
-    
-    async def notes_cb(i):
-        await i.response.send_modal(PersonalNoteModal())
-    
-    gamepass_btn.callback = gamepass_cb
-    group_btn.callback = group_cb
-    notes_btn.callback = notes_cb
-    
-    view.add_item(gamepass_btn)
-    view.add_item(group_btn)
-    view.add_item(notes_btn)
-    
-    return view
-
 # ==================== SHOP COMMAND ====================
 @bot.command(name="shop")
 async def shop_cmd(ctx):
@@ -359,19 +293,82 @@ async def shop_cmd(ctx):
         
         if not target_channel:
             await ctx.send(f"❌ ไม่พบช่องหลัก ID: {MAIN_CHANNEL_ID}", delete_after=5)
+            print(f"❌ Channel not found: {MAIN_CHANNEL_ID}")
             return
         
-        # Create embed and view
-        embed = create_shop_embed()
-        view = create_shop_view()
+        print(f"✅ Found channel: {target_channel.name} (ID: {target_channel.id})")
         
-        # Send new message (don't try to edit existing)
-        await target_channel.send(embed=embed, view=view)
+        # Create embed with correct title
+        embed = discord.Embed(title="🍣 wforr stock 🍣 เปิดให้บริการ", color=0xFFFFFF)
+        embed.add_field(
+            name=f"🎮 กดเกมพาส | 📊 Stock: {format_number(gamepass_stock)} {'🟢' if gamepass_stock > 0 else '🔴'}", 
+            value=f"```\nเรท: {gamepass_rate} | โรแท้\nเช็คราคาพิมพ์: !gp <จำนวน>\n```", 
+            inline=False
+        )
+        embed.add_field(
+            name=f"👥 โรบัคกลุ่ม | 📊 Stock: {format_number(group_stock)} {'🟢' if group_stock > 0 else '🔴'}", 
+            value=f"```\nเรท: {group_rate_low} | 500 บาท+ เรท {group_rate_high}\n⚠️เข้ากลุ่ม 15 วันก่อนซื้อ⚠️\n```", 
+            inline=False
+        )
+        embed.add_field(
+            name="🏪 สถานะร้าน", 
+            value=f"```\n{'🟢 เปิด' if shop_open else '🔴 ปิดชั่วคราว'}\n```", 
+            inline=False
+        )
+        embed.set_footer(
+            text=f"wforr • รับกดเกมพาสและอื่น ๆ | อัปเดตล่าสุด: {get_thailand_time().strftime('%d/%m/%y %H:%M')}", 
+            icon_url="https://media.discordapp.net/attachments/717757556889747657/1403684950770847754/noFilter.png"
+        )
+        embed.set_thumbnail(url="https://media.discordapp.net/attachments/717757556889747657/1403684950770847754/noFilter.png")
         
-        # Send confirmation to the command user
+        # Create buttons
+        view = View(timeout=None)
+        
+        if not shop_open:
+            gamepass_btn = Button(label="ปิดชั่วคราว", style=discord.ButtonStyle.danger, emoji="🎮", disabled=True)
+        elif gamepass_stock <= 0:
+            gamepass_btn = Button(label="สินค้าหมด", style=discord.ButtonStyle.danger, emoji="🎮", disabled=True)
+        else:
+            gamepass_btn = Button(label="กดเกมพาส", style=discord.ButtonStyle.success, emoji="🎮")
+        
+        if not shop_open:
+            group_btn = Button(label="ปิดชั่วคราว", style=discord.ButtonStyle.danger, emoji="👥", disabled=True)
+        elif not group_ticket_enabled:
+            group_btn = Button(label="ปิดชั่วคราว", style=discord.ButtonStyle.danger, emoji="👥", disabled=True)
+        elif group_stock <= 0:
+            group_btn = Button(label="สินค้าหมด", style=discord.ButtonStyle.danger, emoji="👥", disabled=True)
+        else:
+            group_btn = Button(label="เติมโรกลุ่ม", style=discord.ButtonStyle.success, emoji="👥")
+        
+        notes_btn = Button(label="จดวันที่เข้ากลุ่ม", style=discord.ButtonStyle.secondary, emoji="📝")
+        
+        async def gamepass_cb(i):
+            await handle_open_ticket(i, "🍣Sushi Gamepass 🍣", "gamepass")
+        
+        async def group_cb(i):
+            await handle_open_ticket(i, "💰Robux Group💰", "group")
+        
+        async def notes_cb(i):
+            await i.response.send_modal(PersonalNoteModal())
+        
+        gamepass_btn.callback = gamepass_cb
+        group_btn.callback = group_cb
+        notes_btn.callback = notes_cb
+        
+        view.add_item(gamepass_btn)
+        view.add_item(group_btn)
+        view.add_item(notes_btn)
+        
+        # Send the message (always send new, don't try to edit)
+        sent_message = await target_channel.send(embed=embed, view=view)
+        
+        # Save the message reference if needed
+        bot.main_channel_message = sent_message
+        
+        # Send confirmation
         confirm_embed = discord.Embed(
-            title=f"✅ ส่ง embed ร้านค้าไปยัง {target_channel.mention} เรียบร้อยแล้ว",
-            description=f"**ชื่อร้าน:** wforr stock 🍣\n**สถานะ:** {'🟢 เปิด' if shop_open else '🔴 ปิด'}",
+            title=f"✅ ส่ง embed ร้านค้าเรียบร้อยแล้ว",
+            description=f"**ช่อง:** {target_channel.mention}\n**ชื่อร้าน:** wforr stock 🍣\n**สถานะ:** {'🟢 เปิด' if shop_open else '🔴 ปิด'}",
             color=0x00FF00
         )
         await ctx.send(embed=confirm_embed, delete_after=5)
@@ -383,6 +380,31 @@ async def shop_cmd(ctx):
         traceback.print_exc()
         await ctx.send(f"❌ เกิดข้อผิดพลาด: {e}", delete_after=5)
 
+# ==================== CHECK CHANNEL COMMAND ====================
+@bot.command()
+@admin_only()
+async def checkchannel(ctx):
+    """ตรวจสอบช่องหลักและหมวดหมู่"""
+    channel = bot.get_channel(MAIN_CHANNEL_ID)
+    if channel:
+        await ctx.send(f"✅ พบช่องหลัก: {channel.name} (ID: {channel.id})")
+    else:
+        await ctx.send(f"❌ ไม่พบช่องหลัก ID: {MAIN_CHANNEL_ID}")
+    
+    # Check ticket categories
+    gp_cat = bot.get_channel(TICKET_GAMEPASS_CATEGORY_ID)
+    group_cat = bot.get_channel(TICKET_GROUP_CATEGORY_ID)
+    
+    if gp_cat:
+        await ctx.send(f"✅ พบ Gamepass category: {gp_cat.name} (ID: {gp_cat.id})")
+    else:
+        await ctx.send(f"❌ ไม่พบ Gamepass category ID: {TICKET_GAMEPASS_CATEGORY_ID}")
+    
+    if group_cat:
+        await ctx.send(f"✅ พบ Group category: {group_cat.name} (ID: {group_cat.id})")
+    else:
+        await ctx.send(f"❌ ไม่พบ Group category ID: {TICKET_GROUP_CATEGORY_ID}")
+
 # ==================== UPDATE MAIN CHANNEL ====================
 async def update_main_channel():
     """Update the main channel with the latest shop embed"""
@@ -392,8 +414,66 @@ async def update_main_channel():
             print(f"❌ ไม่พบช่องหลัก ID: {MAIN_CHANNEL_ID}")
             return
         
-        embed = create_shop_embed()
-        view = create_shop_view()
+        # Create embed
+        embed = discord.Embed(title="🍣 wforr stock 🍣 เปิดให้บริการ", color=0xFFFFFF)
+        embed.add_field(
+            name=f"🎮 กดเกมพาส | 📊 Stock: {format_number(gamepass_stock)} {'🟢' if gamepass_stock > 0 else '🔴'}", 
+            value=f"```\nเรท: {gamepass_rate} | โรแท้\nเช็คราคาพิมพ์: !gp <จำนวน>\n```", 
+            inline=False
+        )
+        embed.add_field(
+            name=f"👥 โรบัคกลุ่ม | 📊 Stock: {format_number(group_stock)} {'🟢' if group_stock > 0 else '🔴'}", 
+            value=f"```\nเรท: {group_rate_low} | 500 บาท+ เรท {group_rate_high}\n⚠️เข้ากลุ่ม 15 วันก่อนซื้อ⚠️\n```", 
+            inline=False
+        )
+        embed.add_field(
+            name="🏪 สถานะร้าน", 
+            value=f"```\n{'🟢 เปิด' if shop_open else '🔴 ปิดชั่วคราว'}\n```", 
+            inline=False
+        )
+        embed.set_footer(
+            text=f"wforr • รับกดเกมพาสและอื่น ๆ | อัปเดตล่าสุด: {get_thailand_time().strftime('%d/%m/%y %H:%M')}", 
+            icon_url="https://media.discordapp.net/attachments/717757556889747657/1403684950770847754/noFilter.png"
+        )
+        embed.set_thumbnail(url="https://media.discordapp.net/attachments/717757556889747657/1403684950770847754/noFilter.png")
+        
+        # Create view with buttons
+        view = View(timeout=None)
+        
+        if not shop_open:
+            gamepass_btn = Button(label="ปิดชั่วคราว", style=discord.ButtonStyle.danger, emoji="🎮", disabled=True)
+        elif gamepass_stock <= 0:
+            gamepass_btn = Button(label="สินค้าหมด", style=discord.ButtonStyle.danger, emoji="🎮", disabled=True)
+        else:
+            gamepass_btn = Button(label="กดเกมพาส", style=discord.ButtonStyle.success, emoji="🎮")
+        
+        if not shop_open:
+            group_btn = Button(label="ปิดชั่วคราว", style=discord.ButtonStyle.danger, emoji="👥", disabled=True)
+        elif not group_ticket_enabled:
+            group_btn = Button(label="ปิดชั่วคราว", style=discord.ButtonStyle.danger, emoji="👥", disabled=True)
+        elif group_stock <= 0:
+            group_btn = Button(label="สินค้าหมด", style=discord.ButtonStyle.danger, emoji="👥", disabled=True)
+        else:
+            group_btn = Button(label="เติมโรกลุ่ม", style=discord.ButtonStyle.success, emoji="👥")
+        
+        notes_btn = Button(label="จดวันที่เข้ากลุ่ม", style=discord.ButtonStyle.secondary, emoji="📝")
+        
+        async def gamepass_cb(i):
+            await handle_open_ticket(i, "🍣Sushi Gamepass 🍣", "gamepass")
+        
+        async def group_cb(i):
+            await handle_open_ticket(i, "💰Robux Group💰", "group")
+        
+        async def notes_cb(i):
+            await i.response.send_modal(PersonalNoteModal())
+        
+        gamepass_btn.callback = gamepass_cb
+        group_btn.callback = group_cb
+        notes_btn.callback = notes_cb
+        
+        view.add_item(gamepass_btn)
+        view.add_item(group_btn)
+        view.add_item(notes_btn)
         
         # Try to find existing message from bot
         bot_message = None
@@ -407,7 +487,8 @@ async def update_main_channel():
             await bot_message.edit(embed=embed, view=view)
             print("✅ Updated existing shop message")
         else:
-            await channel.send(embed=embed, view=view)
+            sent_message = await channel.send(embed=embed, view=view)
+            bot.main_channel_message = sent_message
             print("✅ Sent new shop message")
         
     except Exception as e:
