@@ -280,13 +280,91 @@ async def show_command_help(ctx, command_name: str):
 # ==================== SHOP COMMAND ====================
 @bot.command(name="shop")
 async def shop_cmd(ctx):
-    """ส่ง embed ร้านค้าหลัก"""
-    await update_main_channel()
-    embed = discord.Embed(
-        title="✅ ส่ง embed ร้านค้าเรียบร้อยแล้ว",
-        color=0x00FF00
-    )
-    await ctx.send(embed=embed, delete_after=3)
+    """ส่ง embed ร้านค้าหลักไปยังช่อง shop open/close"""
+    try:
+        # Get the target channel
+        target_channel = bot.get_channel(SHOP_OPEN_CLOSE_CHANNEL_ID)
+        
+        if not target_channel:
+            await ctx.send("❌ ไม่พบช่องที่กำหนดสำหรับส่ง embed", delete_after=5)
+            return
+        
+        # Create the shop embed
+        embed = discord.Embed(title="🍣 wforr 🍣 เปิดให้บริการ", color=0xFFFFFF)
+        embed.add_field(
+            name=f"🎮 กดเกมพาส | 📊 Stock: {format_number(gamepass_stock)} {'🟢' if gamepass_stock > 0 else '🔴'}", 
+            value=f"```\nเรท: {gamepass_rate} | โรแท้\nเช็คราคาพิมพ์: .gp <จำนวน>\n```", 
+            inline=False
+        )
+        embed.add_field(
+            name=f"👥 โรบัคกลุ่ม | 📊 Stock: {format_number(group_stock)} {'🟢' if group_stock > 0 else '🔴'}", 
+            value=f"```\nเรท: {group_rate_low} | 500 บาท+ เรท {group_rate_high}\n⚠️เข้ากลุ่ม 15 วันก่อนซื้อ⚠️\n```", 
+            inline=False
+        )
+        embed.add_field(
+            name="🏪 สถานะร้าน", 
+            value=f"```\n{'🟢 เปิด' if shop_open else '🔴 ปิดชั่วคราว'}\n```", 
+            inline=False
+        )
+        embed.set_footer(
+            text=f"wforr • รับกดเกมพาสและอื่น ๆ | อัปเดตล่าสุด: {get_thailand_time().strftime('%d/%m/%y %H:%M')}", 
+            icon_url="https://media.discordapp.net/attachments/717757556889747657/1403684950770847754/noFilter.png"
+        )
+        embed.set_thumbnail(url="https://media.discordapp.net/attachments/717757556889747657/1403684950770847754/noFilter.png")
+        
+        # Create buttons
+        view = View(timeout=None)
+        
+        if not shop_open:
+            gamepass_btn = Button(label="ปิดชั่วคราว", style=discord.ButtonStyle.danger, emoji="🎮", disabled=True)
+        elif gamepass_stock <= 0:
+            gamepass_btn = Button(label="สินค้าหมด", style=discord.ButtonStyle.danger, emoji="🎮", disabled=True)
+        else:
+            gamepass_btn = Button(label="กดเกมพาส", style=discord.ButtonStyle.success, emoji="🎮")
+        
+        if not shop_open:
+            group_btn = Button(label="ปิดชั่วคราว", style=discord.ButtonStyle.danger, emoji="👥", disabled=True)
+        elif not group_ticket_enabled:
+            group_btn = Button(label="ปิดชั่วคราว", style=discord.ButtonStyle.danger, emoji="👥", disabled=True)
+        elif group_stock <= 0:
+            group_btn = Button(label="สินค้าหมด", style=discord.ButtonStyle.danger, emoji="👥", disabled=True)
+        else:
+            group_btn = Button(label="เติมโรกลุ่ม", style=discord.ButtonStyle.success, emoji="👥")
+        
+        notes_btn = Button(label="จดวันที่เข้ากลุ่ม", style=discord.ButtonStyle.secondary, emoji="📝")
+        
+        async def gamepass_cb(i):
+            await handle_open_ticket(i, "🍣Sushi Gamepass 🍣", "gamepass")
+        
+        async def group_cb(i):
+            await handle_open_ticket(i, "💰Robux Group💰", "group")
+        
+        async def notes_cb(i):
+            await i.response.send_modal(PersonalNoteModal())
+        
+        gamepass_btn.callback = gamepass_cb
+        group_btn.callback = group_cb
+        notes_btn.callback = notes_cb
+        
+        view.add_item(gamepass_btn)
+        view.add_item(group_btn)
+        view.add_item(notes_btn)
+        
+        # Send to the target channel
+        await target_channel.send(embed=embed, view=view)
+        
+        # Send confirmation to the command user
+        confirm_embed = discord.Embed(
+            title=f"✅ ส่ง embed ร้านค้าไปยัง {target_channel.mention} เรียบร้อยแล้ว",
+            color=0x00FF00
+        )
+        await ctx.send(embed=confirm_embed, delete_after=5)
+        
+        print(f"✅ ส่ง main shop embed ไปยังช่อง {target_channel.name} (ID: {target_channel.id})")
+        
+    except Exception as e:
+        print(f"❌ Error in .shop command: {e}")
+        await ctx.send(f"❌ เกิดข้อผิดพลาด: {e}", delete_after=5)
 
 # ==================== CHANNEL NAME UPDATE ====================
 async def update_channel_name():
@@ -304,7 +382,7 @@ async def update_channel_name():
 # ==================== MAIN CHANNEL UPDATE ====================
 async def update_main_channel():
     try:
-        channel = bot.get_channel(MAIN_CHANNEL_ID)
+        channel = bot.get_channel(SHOP_OPEN_CLOSE_CHANNEL_ID)
         if not channel:
             return
         
