@@ -59,7 +59,6 @@ BUYER_ROLE_ID = 1361555369825927249
 # Ticket category IDs
 TICKET_GAMEPASS_CATEGORY_ID = 1475342278976606228
 TICKET_GROUP_CATEGORY_ID = 1475342482844942397
-SHOP_OPEN_CLOSE_CHANNEL_ID = 1475342278976606229  # Same as MAIN_CHANNEL_ID
 
 # Data storage (in-memory only)
 user_data = {}
@@ -283,37 +282,10 @@ async def show_command_help(ctx, command_name: str):
     else:
         await ctx.send(f"❌ ไม่พบคำสั่ง `{command_name}`")
 
-# ==================== SHOP COMMAND ====================
-@bot.command(name="shop")
-async def shop_cmd(ctx):
-    """ส่ง embed ร้านค้าหลักไปยังช่องหลัก"""
-    try:
-        # Get the main channel
-        target_channel = bot.get_channel(MAIN_CHANNEL_ID)
-        
-        if not target_channel:
-            await ctx.send(f"❌ ไม่พบช่องหลัก ID: {MAIN_CHANNEL_ID}", delete_after=5)
-            return
-        
-        # Create and send the shop embed
-        await send_shop_embed(target_channel)
-        
-        # Send confirmation to the command user
-        confirm_embed = discord.Embed(
-            title=f"✅ ส่ง embed ร้านค้าไปยัง {target_channel.mention} เรียบร้อยแล้ว",
-            color=0x00FF00
-        )
-        await ctx.send(embed=confirm_embed, delete_after=5)
-        
-        print(f"✅ ส่ง main shop embed ไปยังช่อง {target_channel.name} (ID: {target_channel.id})")
-        
-    except Exception as e:
-        print(f"❌ Error in !shop command: {e}")
-        await ctx.send(f"❌ เกิดข้อผิดพลาด: {e}", delete_after=5)
-
-async def send_shop_embed(channel):
-    """Function to send the shop embed to a channel"""
-    embed = discord.Embed(title="🍣 wforr 🍣 เปิดให้บริการ", color=0xFFFFFF)
+# ==================== SHOP EMBED CREATION ====================
+def create_shop_embed():
+    """Create the shop embed with current stock and status"""
+    embed = discord.Embed(title="🍣 wforr stock 🍣 เปิดให้บริการ", color=0xFFFFFF)
     embed.add_field(
         name=f"🎮 กดเกมพาส | 📊 Stock: {format_number(gamepass_stock)} {'🟢' if gamepass_stock > 0 else '🔴'}", 
         value=f"```\nเรท: {gamepass_rate} | โรแท้\nเช็คราคาพิมพ์: !gp <จำนวน>\n```", 
@@ -334,8 +306,10 @@ async def send_shop_embed(channel):
         icon_url="https://media.discordapp.net/attachments/717757556889747657/1403684950770847754/noFilter.png"
     )
     embed.set_thumbnail(url="https://media.discordapp.net/attachments/717757556889747657/1403684950770847754/noFilter.png")
-    
-    # Create buttons
+    return embed
+
+def create_shop_view():
+    """Create the view with buttons for the shop"""
     view = View(timeout=None)
     
     if not shop_open:
@@ -373,20 +347,72 @@ async def send_shop_embed(channel):
     view.add_item(group_btn)
     view.add_item(notes_btn)
     
-    # Check if there's an existing message from the bot
-    bot_message = None
-    async for msg in channel.history(limit=20):
-        if msg.author == bot.user and len(msg.embeds) > 0:
-            if "wforr" in msg.embeds[0].title:
-                bot_message = msg
-                break
-    
-    if bot_message:
-        await bot_message.edit(embed=embed, view=view)
-        print("✅ Updated existing shop message")
-    else:
-        await channel.send(embed=embed, view=view)
-        print("✅ Sent new shop message")
+    return view
+
+# ==================== SHOP COMMAND ====================
+@bot.command(name="shop")
+async def shop_cmd(ctx):
+    """ส่ง embed ร้านค้าหลักไปยังช่องหลัก"""
+    try:
+        # Get the main channel
+        target_channel = bot.get_channel(MAIN_CHANNEL_ID)
+        
+        if not target_channel:
+            await ctx.send(f"❌ ไม่พบช่องหลัก ID: {MAIN_CHANNEL_ID}", delete_after=5)
+            return
+        
+        # Create embed and view
+        embed = create_shop_embed()
+        view = create_shop_view()
+        
+        # Send new message (don't try to edit existing)
+        await target_channel.send(embed=embed, view=view)
+        
+        # Send confirmation to the command user
+        confirm_embed = discord.Embed(
+            title=f"✅ ส่ง embed ร้านค้าไปยัง {target_channel.mention} เรียบร้อยแล้ว",
+            description=f"**ชื่อร้าน:** wforr stock 🍣\n**สถานะ:** {'🟢 เปิด' if shop_open else '🔴 ปิด'}",
+            color=0x00FF00
+        )
+        await ctx.send(embed=confirm_embed, delete_after=5)
+        
+        print(f"✅ ส่ง main shop embed ไปยังช่อง {target_channel.name} (ID: {target_channel.id})")
+        
+    except Exception as e:
+        print(f"❌ Error in !shop command: {e}")
+        traceback.print_exc()
+        await ctx.send(f"❌ เกิดข้อผิดพลาด: {e}", delete_after=5)
+
+# ==================== UPDATE MAIN CHANNEL ====================
+async def update_main_channel():
+    """Update the main channel with the latest shop embed"""
+    try:
+        channel = bot.get_channel(MAIN_CHANNEL_ID)
+        if not channel:
+            print(f"❌ ไม่พบช่องหลัก ID: {MAIN_CHANNEL_ID}")
+            return
+        
+        embed = create_shop_embed()
+        view = create_shop_view()
+        
+        # Try to find existing message from bot
+        bot_message = None
+        async for msg in channel.history(limit=20):
+            if msg.author == bot.user and len(msg.embeds) > 0:
+                if "wforr stock" in msg.embeds[0].title:
+                    bot_message = msg
+                    break
+        
+        if bot_message:
+            await bot_message.edit(embed=embed, view=view)
+            print("✅ Updated existing shop message")
+        else:
+            await channel.send(embed=embed, view=view)
+            print("✅ Sent new shop message")
+        
+    except Exception as e:
+        print(f"❌ Error updating main channel: {e}")
+        traceback.print_exc()
 
 # ==================== CHANNEL NAME UPDATE ====================
 async def update_channel_name():
@@ -400,20 +426,6 @@ async def update_channel_name():
                 print(f"✅ เปลี่ยนชื่อช่องเป็น: {new_name}")
     except Exception as e:
         print(f"❌ Error updating channel name: {e}")
-
-# ==================== MAIN CHANNEL UPDATE ====================
-async def update_main_channel():
-    """Update or send the main shop embed"""
-    try:
-        channel = bot.get_channel(MAIN_CHANNEL_ID)
-        if not channel:
-            return
-        
-        await send_shop_embed(channel)
-        
-    except Exception as e:
-        print(f"❌ Error updating main channel: {e}")
-        traceback.print_exc()
 
 # ==================== TICKET HANDLER ====================
 async def handle_open_ticket(interaction, category_name, stock_type):
