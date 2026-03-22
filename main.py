@@ -48,13 +48,13 @@ gamepass_stock = 5000
 group_stock = 10000
 
 # Channel IDs
-MAIN_CHANNEL_ID = 1361044752975532152
-SALES_LOG_CHANNEL_ID = 1402993077643120720
+MAIN_CHANNEL_ID = 1475342278976606229
+SALES_LOG_CHANNEL_ID = 1475344141419417612
 CREDIT_CHANNEL_ID = 1475343873684406353
 TRANSCRIPT_CHANNEL_ID = 1475344141419417612
 DELIVERED_CATEGORY_ID = 1475345768037482662
-ARCHIVED_CATEGORY_ID = 1445086228113264650
-BUYER_ROLE_ID = 1361555369825927249
+ARCHIVED_CATEGORY_ID = 1485235427500753059
+BUYER_ROLE_ID = 1475346221605588992
 
 # Ticket category IDs
 TICKET_GAMEPASS_CATEGORY_ID = 1475342278976606228
@@ -97,7 +97,7 @@ class RateLimiter:
 # ==================== BOT CLASS ====================
 class MyBot(commands.Bot):
     def __init__(self):
-        super().__init__(command_prefix=".", intents=intents, help_command=None)
+        super().__init__(command_prefix="!", intents=intents, help_command=None)
         self.last_update_time = 0
         self.is_reacting_to_credit_channel = False
         self.commands_synced = False
